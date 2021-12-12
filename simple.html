@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>Line風アプリ（渡邊明）</title>
+<link rel="stylesheet" href="css/reset.css">
+<link rel="stylesheet" href="css/style.line.css">
+</head>
+<body>
+
+<!-- コンテンツ表示画面 -->
+
+<div class="head">LINE風アプリ</div>
+<div>
+    <div id="outputframe"><div id="output" ></div></div>
+    <div id="inputarea">
+        <div>
+            <input type="text" id="uname" placeholder="なまえ">
+        </div>
+        <div>
+            <textarea name="" id="text" cols="30" rows="10"placeholder="メッセージ"></textarea>
+            <button id="send">送信</button>
+        </div>
+    </div>
+    <button id="allDelete">全削除</button>
+<br>
+</div>
+
+
+
+
+
+
+
+<!--/ コンテンツ表示画面 -->
+
+
+
+<!-- JQuery -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<!-- JQuery -->
+<script>
+
+
+</script>
+
+<!--** 以下Firebase **-->
+<script type="module">
+    // Import the functions you need from the SDKs you need
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.0/firebase-app.js";
+    // TODO: Add SDKs for Firebase products that you want to use
+    // https://firebase.google.com/docs/web/setup#available-libraries
+    import { getDatabase, ref, push, set, onChildAdded, remove, onChildRemoved }
+        from "https://cdnjs.cloudflare.com/ajax/libs/firebase/9.6.0/firebase-database.min.js";
+
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+      apiKey: "",
+      authDomain: "gsapp-525cd.firebaseapp.com",
+      projectId: "gsapp-525cd",
+      storageBucket: "gsapp-525cd.appspot.com",
+      messagingSenderId: "164980706045",
+      appId: "1:164980706045:web:29da9def73a1a2f91ecc94"
+    };
+  
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+
+    const db=getDatabase(app);
+    const dbRef=ref(db,"chat");
+  
+  
+    //ページ更新時の自分の名前プリセット
+    let namae=localStorage.getItem("ラインアプリ名前");
+    console.log(namae);
+    $("#uname").val(namae);
+
+    $("#send").on("click",function(){
+        const uname=$("#uname").val();
+        const text=$("#text").val();
+        const date1 = new Date();
+        const date2 = date1.getFullYear() + "/" + 
+            (date1.getMonth() + 1)  + "/" + 
+            date1.getDate() + "　" + 
+            date1.getHours() + "時" + 
+            date1.getMinutes() + "分" ;
+        const msg={
+            uname:uname,
+            text:text,
+            date2:date2,
+        }
+        const newPostRef=push(dbRef);
+        set(newPostRef,msg);
+        $("#text").val("");
+        $("#output").scrollTop(999999999);
+    });
+
+
+
+    onChildAdded(dbRef,function (data){
+        const msg=data.val();
+        const key=data.key; //keyを取得
+        const myname=$("#uname").val(); 
+
+        //console.log(msg);
+        //console.log(key);
+        console.log(myname);
+        //console.log(msg.uname);
+         if(msg.uname==myname){
+            let 
+            h='<div id="mymessagediv">';
+            h+='<div id="myname">';
+            h+=msg.uname;
+            h+='</div>';
+
+            h+='<div id="mymsgdelete">';
+            h+='<div id="mymessage">';
+            h+=msg.text;
+            h+='</div>';
+            h+='<button id="delete" class="';
+            h+=key;
+            h+='">削除</button>';
+            h+='</div>';
+
+            h+='<div id="mydate">';
+            h+=msg.date2;
+            h+='</div></div>';
+            //h+='<button id="delete" class="';
+            //h+=key;
+            //h+='">削除</button>';
+            //h+='</div>';
+            $("#output").append(h);
+
+
+        }else{
+            let 
+            h='<div id="othermessagediv">';
+            h+='<div id="othername">';
+            h+=msg.uname;
+            h+='</div>';
+
+            h+='<div id="othermsgdelete">';
+            h+='<div id="othermessage">';
+            h+=msg.text;
+            h+='</div>';
+            h+='<button id="delete" class="';
+            h+=key;
+            h+='">削除</button>';
+            h+='</div>';
+
+            h+='<div id="otherdate">';
+            h+=msg.date2;
+            h+='</div></div>';
+            //h+='<button id="delete" class="';
+            //h+=key;
+            //h+='">削除</button>';
+            //h+='</div>';
+            $("#output").append(h);
+        };
+        let nameset=localStorage.getItem("ラインアプリ名前");
+        if(nameset!=myname){
+            localStorage.setItem("ラインアプリ名前",myname);
+            location.reload();
+            };
+        $("#output").scrollTop(999999999);
+    })
+
+
+
+
+    $("#text").on("keydown",function(e){
+        if(e.keyCode==13){
+        //console.log(e);
+        const uname=$("#uname").val();
+        const text=$("#text").val();
+        const date1 = new Date();
+        const date2 = date1.getFullYear() + "/" + 
+            (date1.getMonth() + 1)  + "/" + 
+            date1.getDate() + "　" + 
+            date1.getHours() + "時" + 
+            date1.getMinutes() + "分" ;
+        const msg={
+            uname:uname,
+            text:text,
+            date2:date2,
+        }
+        const newPostRef=push(dbRef);
+        set(newPostRef,msg);
+        $("#text").val("");
+        $("#output").scrollTop(999999999);
+        }
+        });
+
+    ///個別削除ボタン押下イベント
+    $(document).on("click","#delete", function () {
+        //alert("test");
+        const key=$(this).attr("class");
+        console.log(key);
+        remove(ref(db, "chat/" + key));
+        location.reload();
+        //console.log("remove: ${random_id}");
+    });
+
+
+    $("#allDelete").on("click",function(){
+        console.log("test");
+        remove(dbRef);
+        $("#output").remove();
+        //const uname=$("#uname").val();
+        //const text=$("#text").val();
+        //const msg={
+        //    uname:uname,
+        //    text:text
+        //}
+        //const newPostRef=push(dbRef);
+        //set(newPostRef,msg);
+        });
+        
+
+const date1 = new Date();
+const date2 = date1.getFullYear() + "/" + 
+            (date1.getMonth() + 1)  + "/" + 
+            date1.getDate() + "　" + 
+            date1.getHours() + "時" + 
+            date1.getMinutes() + "分" 
+console.log(date2); 
+
+
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
